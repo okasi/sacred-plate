@@ -1,3 +1,4 @@
+import { useState } from 'react';
 import { motion } from 'framer-motion';
 
 interface SacredGeometryProps {
@@ -10,7 +11,7 @@ export function SacredRings({ className = '', size = 400, animate = true }: Sacr
   return (
     <div 
       className={`relative ${className}`}
-      style={{ width: size, height: size }}
+      style={{ width: size, height: size, maxWidth: '92vw', maxHeight: '92vw' }}
     >
       {/* Outer ring */}
       <motion.svg
@@ -181,35 +182,44 @@ export function FlowerOfLife({ className = '', size = 300 }: SacredGeometryProps
 }
 
 export function StarField({ className = '' }: { className?: string }) {
+  const [stars] = useState(() =>
+    Array.from({ length: 50 }, () => {
+      const opacity = Math.random() * 0.5 + 0.2;
+
+      return {
+        size: Math.random() * 2 + 1,
+        left: Math.random() * 100,
+        top: Math.random() * 100,
+        opacity,
+        duration: Math.random() * 3 + 2,
+        delay: Math.random() * 2,
+      };
+    })
+  );
+
   return (
     <div className={`absolute inset-0 overflow-hidden pointer-events-none ${className}`}>
-      {[...Array(50)].map((_, i) => {
-        const size = Math.random() * 2 + 1;
-        const left = Math.random() * 100;
-        const top = Math.random() * 100;
-        const opacity = Math.random() * 0.5 + 0.2;
-        const duration = Math.random() * 3 + 2;
-        
+      {stars.map((star, i) => {
         return (
           <motion.div
             key={i}
             className="absolute rounded-full bg-white"
             style={{
-              width: size,
-              height: size,
-              left: `${left}%`,
-              top: `${top}%`,
-              opacity
+              width: star.size,
+              height: star.size,
+              left: `${star.left}%`,
+              top: `${star.top}%`,
+              opacity: star.opacity
             }}
             animate={{
-              opacity: [opacity, opacity * 0.3, opacity],
+              opacity: [star.opacity, star.opacity * 0.3, star.opacity],
               scale: [1, 1.2, 1]
             }}
             transition={{
-              duration,
+              duration: star.duration,
               repeat: Infinity,
               ease: 'easeInOut',
-              delay: Math.random() * 2
+              delay: star.delay
             }}
           />
         );
@@ -270,7 +280,7 @@ export function GlowOrb({ className = '', size = 300 }: SacredGeometryProps) {
   return (
     <div 
       className={`relative ${className}`}
-      style={{ width: size, height: size }}
+      style={{ width: size, height: size, maxWidth: '92vw', maxHeight: '92vw' }}
     >
       <motion.div
         className="absolute inset-0 rounded-full"

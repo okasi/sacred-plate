@@ -288,7 +288,7 @@ export function ResultSection({ result, userProfile, onViewMealPlan }: ResultSec
             </div>
           </div>
         </motion.div>
-        
+
         {/* Narrative */}
         <motion.div
           initial={{ opacity: 0, y: 30 }}

@@ -1,6 +1,9 @@
+"use client";
+
 import { useState } from 'react';
-import type { UserProfile, SacredArchetype } from '@/types';
+import type { FlowView, SacredArchetype, UserProfile } from '@/types';
 import { generateSacredArchetype, getWesternZodiac, getChineseZodiac, calculateMBTI, calculateDosha, getDominantDosha } from '@/data';
+import { LivePresencePanel } from '@/components/LivePresencePanel';
 import { LandingSection } from '@/sections/LandingSection';
 import { FormIntroSection } from '@/sections/FormIntroSection';
 import { QuizSection } from '@/sections/QuizSection';
@@ -9,12 +12,13 @@ import { ResultSection } from '@/sections/ResultSection';
 import { MealPlanSection } from '@/sections/MealPlanSection';
 import { ClosingSection } from '@/sections/ClosingSection';
 import { ProgressBar } from '@/components/ProgressBar';
+import { useLivePresence } from '@/hooks/use-live-presence';
 import { Toaster } from '@/components/ui/sonner';
 import { toast } from 'sonner';
 import html2canvas from 'html2canvas';
 import jsPDF from 'jspdf';
 
-type AppView = 'landing' | 'form' | 'quiz-mbti' | 'quiz-dosha' | 'loading' | 'result' | 'mealplan' | 'closing';
+type AppView = FlowView;
 
 function loadSavedState(): { userProfile: Partial<UserProfile>; result: SacredArchetype | null } {
   const saved = localStorage.getItem('sacred-plate-profile');
@@ -54,6 +58,7 @@ function App() {
   const [currentView, setCurrentView] = useState<AppView>('landing');
   const [userProfile, setUserProfile] = useState<Partial<UserProfile>>(savedState.userProfile);
   const [result, setResult] = useState<SacredArchetype | null>(savedState.result);
+  const [quizProgress, setQuizProgress] = useState<{ progress: number; label: string } | null>(null);
 
   const progressMap: Record<AppView, number> = {
     'landing': 0,
@@ -66,6 +71,37 @@ function App() {
     'closing': 100
   };
   const progress = progressMap[currentView];
+  const liveProgress =
+    currentView === 'quiz-mbti' && quizProgress
+      ? Math.round(15 + quizProgress.progress * 0.35)
+      : currentView === 'quiz-dosha' && quizProgress
+        ? Math.round(55 + quizProgress.progress * 0.25)
+        : progress;
+  const liveProgressLabel =
+    currentView === 'landing'
+      ? 'Browsing landing page'
+      : currentView === 'form'
+        ? 'Entering profile'
+        : currentView === 'quiz-mbti' || currentView === 'quiz-dosha'
+          ? quizProgress?.label ?? 'Answering questions'
+          : currentView === 'loading'
+            ? 'Generating result'
+            : currentView === 'result'
+              ? 'Viewing result'
+              : currentView === 'mealplan'
+                ? 'Reviewing ingredients'
+                : 'Wrapping up';
+  const {
+    sessionId,
+    participants,
+    isConnected,
+  } = useLivePresence({
+    view: currentView,
+    progress: liveProgress,
+    progressLabel: liveProgressLabel,
+    userProfile,
+    result,
+  });
 
   const handleStart = () => {
     setCurrentView('form');
@@ -341,7 +377,11 @@ function App() {
       {/* Main content */}
       <main className="relative z-10">
         {currentView === 'landing' && (
-          <LandingSection onStart={handleStart} />
+          <LandingSection
+            onStart={handleStart}
+            onResume={() => setCurrentView('result')}
+            hasSavedProfile={Boolean(result && userProfile.name)}
+          />
         )}
         
         {currentView === 'form' && (
@@ -357,6 +397,7 @@ function App() {
             userProfile={userProfile}
             onComplete={handleMBTIComplete}
             onBack={() => setCurrentView('form')}
+            onProgressChange={setQuizProgress}
           />
         )}
         
@@ -366,6 +407,7 @@ function App() {
             userProfile={userProfile}
             onComplete={handleDoshaComplete}
             onBack={() => setCurrentView('quiz-mbti')}
+            onProgressChange={setQuizProgress}
           />
         )}
         
@@ -398,6 +440,12 @@ function App() {
           />
         )}
       </main>
+
+      <LivePresencePanel
+        sessionId={sessionId}
+        participants={participants}
+        isConnected={isConnected}
+      />
       
       <Toaster 
         position="bottom-center"

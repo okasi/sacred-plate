@@ -18,6 +18,15 @@ export type MBTIType =
   | 'ESTJ' | 'ESFJ' | 'ENFJ' | 'ENTJ';
 
 export type DoshaType = 'vata' | 'pitta' | 'kapha';
+export type FlowView =
+  | 'landing'
+  | 'form'
+  | 'quiz-mbti'
+  | 'quiz-dosha'
+  | 'loading'
+  | 'result'
+  | 'mealplan'
+  | 'closing';
 
 export interface DoshaScores {
   vata: number;
@@ -189,4 +198,35 @@ export interface AppState {
   mbtiAnswers: number[];
   doshaAnswers: number[];
   result: SacredArchetype | null;
+}
+
+export interface LiveProfileSummary {
+  bloodType?: BloodType;
+  westernZodiac?: WesternZodiac;
+  chineseZodiac?: ChineseZodiac;
+  mbti?: MBTIType;
+  dominantDosha?: DoshaType;
+}
+
+export interface LiveParticipant {
+  sessionId: string;
+  name: string;
+  view: FlowView;
+  progress: number;
+  progressLabel: string;
+  isComplete: boolean;
+  updatedAt: number;
+  result: SacredArchetype | null;
+  profileSummary: LiveProfileSummary | null;
+}
+
+export interface LivePresenceUpdatePayload {
+  sessionId: string;
+  name: string;
+  view: FlowView;
+  progress: number;
+  progressLabel: string;
+  isComplete: boolean;
+  result: SacredArchetype | null;
+  profileSummary: LiveProfileSummary | null;
 }

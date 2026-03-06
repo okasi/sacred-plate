@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { SacredRings, GlowOrb } from '@/components/SacredGeometry';
 import { ChevronLeft } from 'lucide-react';
@@ -14,11 +14,12 @@ interface QuizSectionProps {
   }>;
   onComplete: (answers: number[], bloodType?: string) => void;
   onBack: () => void;
+  onProgressChange?: (details: { progress: number; label: string }) => void;
 }
 
 const AUTO_ADVANCE_DELAY = 377; // milliseconds
 
-export function QuizSection({ type, userProfile, onComplete, onBack }: QuizSectionProps) {
+export function QuizSection({ type, userProfile, onComplete, onBack, onProgressChange }: QuizSectionProps) {
   const [currentStep, setCurrentStep] = useState(0);
   const [answers, setAnswers] = useState<number[]>([]);
   const [selectedBloodType, setSelectedBloodType] = useState<BloodType | null>(userProfile.bloodType || null);
@@ -31,6 +32,25 @@ export function QuizSection({ type, userProfile, onComplete, onBack }: QuizSecti
   const currentQuestion = questions[questionIndex];
   
   const progress = ((currentStep + 1) / totalSteps) * 100;
+
+  useEffect(() => {
+    if (!onProgressChange) {
+      return;
+    }
+
+    const stepNumber = currentStep + 1;
+    const label =
+      type === 'mbti'
+        ? isBloodTypeStep
+          ? 'MBTI: blood type'
+          : `MBTI: ${questionIndex + 1}/${questions.length}`
+        : `Dosha: ${questionIndex + 1}/${questions.length}`;
+
+    onProgressChange({
+      progress,
+      label: `${label} (${stepNumber}/${totalSteps})`,
+    });
+  }, [currentStep, isBloodTypeStep, onProgressChange, progress, questionIndex, questions.length, totalSteps, type]);
 
   const handleBloodTypeSelect = (bloodType: BloodType) => {
     if (isTransitioning) return;
